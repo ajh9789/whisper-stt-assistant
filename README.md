@@ -2,8 +2,36 @@
 
 ## 🎙️ Microphone recording + Whisper STT batch assistant 
 ## 사용자의 음성을 자동으로 텍스트로 바꿔주는 면접 연습 및 피드백용 project입니다.
+> 📋 본 프로젝트의 문서 작성 및 코드 정리는 ChatGPT를 도구로 참고/보조하여 진행되었습니다.
 
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)
+![ChatGPT](https://img.shields.io/badge/ChatGPT-Assistant-10A37F?logo=openai&logoColor=white)
+![OpenAI Whisper](https://img.shields.io/badge/OpenAI-Whisper-6e00ff?logo=openai&logoColor=white)
+![Sounddevice](https://img.shields.io/badge/sounddevice-Audio-blueviolet)
+![NVIDIA](https://img.shields.io/badge/NVIDIA-RTX%203070-76B900?logo=nvidia&logoColor=white)
+![Windows](https://img.shields.io/badge/Windows-10%2B-0078D6?logo=windows&logoColor=white)
+![PyCharm](https://img.shields.io/badge/PyCharm-Professional-green?logo=jetbrains&logoColor=white)
+![Git](https://img.shields.io/badge/Git-Version%20Control-orange?logo=git&logoColor=white)
 
+## 🛠️ 기술 스택
+
+- **언어**: Python 3.9 이상
+- **라이브러리**: 
+  - sounddevice
+  - OpenAI Whisper (MIT 라이선스)
+- **개발 환경**: 
+  - Windows10
+  - Python 가상환경 (venv)
+- **개발 도구**:
+  - Git
+  - PyCharm
+  - ChatGPT (문서 및 코드 보조 도구)
+----
+## 💻 테스트 환경
+
+- NVIDIA RTX 3070
+- AMD Ryzen 5 5600X
+- 32GB RAM
 ---
 
 ## 📥 설치 방법
@@ -105,7 +133,8 @@ DEVICE_ID = 1
 - venv, .idea, 등등 파일들은 `.gitignore`로 자동 제외됩니다.  
 
  ### 파일구조
-```
+
+```plaintext
 WhisperSTT_Assistant/
 ├── .gitignore
 ├── README.md
@@ -114,4 +143,10 @@ WhisperSTT_Assistant/
 ├── 2min_key_record.py
 ├── venv/ → (gitignore로 제외됨)
 ```
+
+---
+
+## 📢 참고
+본 프로젝트는 OpenAI Whisper 모델 및 sounddevice 라이브러리를 활용합니다.
+Whisper is an open-source model released by OpenAI (MIT License).
 ---
