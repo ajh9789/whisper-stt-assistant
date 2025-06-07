@@ -15,7 +15,7 @@ import time
 MODEL_SIZE = "large-v3"               # whisper 모델 크기 (small, medium, large 등)
 DEVICE_ID = 1                         # 🎙️ 사용할 microphone device index
 CHANNELS = 1                           # mono (단일 채널)
-ENERGY_GATE_THRESHOLD = 0.0008          # ✅ 감도: 너무 조용한 녹음은 무시
+ENERGY_GATE_THRESHOLD = 0.0007          # ✅ 감도: 너무 조용한 녹음은 무시
 MAX_RECORD_SECONDS = 120                # ✅ 최대 녹음 시간 3070은 2분넘어가면 변환시간이 너무오래걸림
 
 # =============================

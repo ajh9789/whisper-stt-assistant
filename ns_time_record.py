@@ -13,9 +13,9 @@ import time
 
 MODEL_SIZE = "large-v3"
 DEVICE_ID = 1
-RECORD_SECONDS = 5
+RECORD_SECONDS = 6
 CHANNELS = 1
-ENERGY_GATE_THRESHOLD = 0.0008
+ENERGY_GATE_THRESHOLD = 0.0007
 
 # =============================
 # 🎧 디바이스 및 모델 초기화
@@ -23,7 +23,7 @@ ENERGY_GATE_THRESHOLD = 0.0008
 
 device_info = sd.query_devices(DEVICE_ID, 'input')
 SAMPLE_RATE = int(device_info['default_samplerate'])
-blocksize = int(SAMPLE_RATE * 2.5)  # n초 단위 블록
+blocksize = int(SAMPLE_RATE * 2)  # n초 단위 블록
 
 # =============================
 # 🔁 오디오 캡처 콜백
