@@ -79,7 +79,7 @@ def process_audio(queue: Queue):
             if torch.mean(torch.abs(audio_tensor)) < ENERGY_GATE_THRESHOLD:
                 # 무음 시간 체크
                 if time.time() - last_spoken_time >= silence_interval:
-                    print(f"🔇 [무음 상태: {silence_interval}초 이상]")
+                    print("-")
                     last_spoken_time = time.time()
                 continue
 
