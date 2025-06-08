@@ -60,6 +60,8 @@ def process_audio(queue: Queue):
     audio_chunks = []
     total_frames = 0
     target_frames = SAMPLE_RATE * RECORD_SECONDS
+    last_spoken_time = time.time()
+    silence_interval = 5  # 무음 경고 기준 초
 
     while True:
         chunk = queue.get()
@@ -75,6 +77,10 @@ def process_audio(queue: Queue):
 
             # 무음 필터
             if torch.mean(torch.abs(audio_tensor)) < ENERGY_GATE_THRESHOLD:
+                # 무음 시간 체크
+                if time.time() - last_spoken_time >= silence_interval:
+                    print(f"🔇 [무음 상태: {silence_interval}초 이상]")
+                    last_spoken_time = time.time()
                 continue
 
             # 리샘플링
@@ -91,9 +97,10 @@ def process_audio(queue: Queue):
                 beam_size=1,
                 temperature=0.0
             )
-            #[{datetime.now().strftime('%H:%M:%S')}]:
+
             for segment in segments:
                 print(f"{segment.text.strip()}")
+                last_spoken_time = time.time()  # 발화 시간 갱신
 
 # =============================
 # 🎯 실행
