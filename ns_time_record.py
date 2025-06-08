@@ -13,7 +13,7 @@ import time
 
 MODEL_SIZE = "large-v3"
 DEVICE_ID = 1
-RECORD_SECONDS = 6
+RECORD_SECONDS = 10
 CHANNELS = 1
 ENERGY_GATE_THRESHOLD = 0.0007
 
@@ -79,7 +79,7 @@ def process_audio(queue: Queue):
 
             # 리샘플링
             if SAMPLE_RATE != 16000:
-                audio_tensor = torchaudio.functional.resample(audio_tensor, orig_freq=SAMPLE_RATE, new_freq=16000)
+                audio_tensor = torchaudio.functional.resample(audio_tensor, orig_freq=SAMPLE_RATE, new_freq=16000).contiguous()
 
             audio_array = audio_tensor.cpu().numpy()
 
