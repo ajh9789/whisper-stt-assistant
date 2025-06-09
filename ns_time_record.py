@@ -107,7 +107,7 @@ def process_audio(queue: Queue, model_size, sample_rate, energy_threshold, log_p
                 combined_audio = torch.cat(buffer)
                 audio_array = combined_audio.cpu().numpy()
 
-                segments, _ = model.transcribe(audio_array, language="ko", vad_filter=False, beam_size=1, temperature=0.0)
+                segments, _ = model.transcribe(audio_array, language="ko", vad_filter=True, beam_size=1, temperature=0.0)
                 for segment in segments:
                     clean_text = remove_repeated_words(segment.text.strip())
                     if not is_duplicate_text(clean_text, last_output_text):
