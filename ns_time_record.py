@@ -139,7 +139,7 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                     for segment in segments:
                         text = segment.text.strip()
                         # 반복 텍스트 필터 적용
-                        if not is_repetitive(text):
+                        if not clean_repetitive(text):
                             if text != last_output_text:
                                 combined_text.append(text)
                                 last_output_text = text
