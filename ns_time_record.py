@@ -12,7 +12,6 @@ from datetime import datetime
 from faster_whisper import WhisperModel
 
 # ============================= Logger
-# Logger 클래스 수정
 class Logger:
     def __init__(self, logfile):
         self.terminal = sys.__stdout__
@@ -21,21 +20,21 @@ class Logger:
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
-        self.log.flush()  
+        self.log.flush()
 
     def flush(self):
         self.terminal.flush()
         self.log.flush()
 
-# ============================= 중복 단어/문장 제거
+# ============================= 중복 제거 함수
 def remove_repeated_words(text):
     return re.sub(r'\b(\w+)( \1\b)+', r'\1', text)
 
 def is_duplicate_text(text, last_text):
     return text == last_text
 
-# ============================= STT 처리
-def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id, channels, chunk_duration, silence_interval):
+# ============================= STT 처리 메인 함수
+def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id, channels, chunk_duration, silence_interval, RECORD_SECONDS, queue_size):
 
     log_file = open(log_path, "a", encoding="utf-8")
     sys.stdout.reconfigure(encoding='utf-8')
@@ -45,15 +44,17 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
     sys.stdout.flush()
 
     model = WhisperModel(model_size, device="cuda" if torch.cuda.is_available() else "cpu", compute_type="float16")
-    start_time = datetime.now()
-    print(f"STT 시작: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    print(f"STT 시작: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     sys.stdout.flush()
 
-    audio_queue = queue.Queue(maxsize=10)
+    audio_queue = queue.Queue(maxsize=queue_size)
     buffer = []
     buffer_duration = 0.0
     last_spoken_time = time.time()
+    silence_marker_printed = False  # 무음 상태 중복 출력 방지
+    combined_text = []
     last_output_text = ""
+    final_output = ""
 
     def audio_callback(indata, frames, time_info, status):
         if status:
@@ -74,9 +75,11 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
             audio_tensor = torch.from_numpy(chunk).squeeze()
             energy = torch.mean(torch.abs(audio_tensor)).item()
 
-            # (디버깅용 에너지 확인)
+            # 무음 디버깅용
             # sys.__stdout__.write(f"[DEBUG] chunk_energy={energy:.6f}\n")
             # sys.__stdout__.flush()
+
+            buffer_duration += chunk_duration
 
             if energy >= energy_threshold:
                 if sample_rate != 16000:
@@ -84,56 +87,46 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                         audio_tensor, orig_freq=sample_rate, new_freq=16000
                     ).contiguous()
                 buffer.append(audio_tensor)
-                buffer_duration += chunk_duration
                 last_spoken_time = time.time()
-            else:
-                if time.time() - last_spoken_time >= silence_interval and buffer:
-                    last_spoken_time = time.time()
+
+            is_forced_flush = buffer_duration >= RECORD_SECONDS
+            is_silence_flush = time.time() - last_spoken_time >= silence_interval
+
+            if is_forced_flush or is_silence_flush:
+                if buffer:
                     combined_audio = torch.cat(buffer)
                     audio_array = combined_audio.cpu().numpy()
                     segments, _ = model.transcribe(
-                        audio_array, 
-                        language="ko", 
-                        vad_filter=True, 
-                        beam_size=1, 
+                        audio_array,
+                        language="ko",
+                        vad_filter=True,
+                        beam_size=1,
                         temperature=0.0)
                     for segment in segments:
                         clean_text = remove_repeated_words(segment.text.strip())
                         if not is_duplicate_text(clean_text, last_output_text):
-                            print(clean_text)
-                            sys.stdout.flush()
+                            combined_text.append(clean_text)
                             last_output_text = clean_text
-                    buffer.clear()
-                    buffer_duration = 0.0
-                    sys.__stdout__.write("-\n")
-                    sys.__stdout__.flush()
-                else:
-                    continue
+                    final_output = " ".join(combined_text).strip()
+                    combined_text.clear()
 
-            if buffer_duration >= 10.0:
-                combined_audio = torch.cat(buffer)
-                audio_array = combined_audio.cpu().numpy()
-
-                segments, _ = model.transcribe(
-                    audio_array, 
-                    language="ko", 
-                    vad_filter=True, 
-                    beam_size=1, 
-                    temperature=0.0)
-                for segment in segments:
-                    clean_text = remove_repeated_words(segment.text.strip())
-                    if not is_duplicate_text(clean_text, last_output_text):
-                        print(clean_text)
+                    if final_output:
+                        print(final_output)
                         sys.stdout.flush()
-                        last_output_text = clean_text
-                        last_spoken_time = time.time()
+                        silence_marker_printed = False  # 음성 출력 후 다시 "-" 출력 가능하게 초기화
+
+                    final_output = ""
+                else:
+                    if is_silence_flush and not silence_marker_printed:
+                        sys.__stdout__.write("-\n")
+                        sys.__stdout__.flush()
+                        silence_marker_printed = True
 
                 buffer.clear()
                 buffer_duration = 0.0
 
     except KeyboardInterrupt:
-        end_time = datetime.now()
-        print(f"\nSTT 종료: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"\nSTT 종료: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     finally:
         sys.stdout.flush()
         log_file.close()
@@ -142,11 +135,12 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
 if __name__ == "__main__":
     MODEL_SIZE = "large-v3"
     DEVICE_ID = 1
-    RECORD_SECONDS = 15
+    RECORD_SECONDS = 14.0
     CHANNELS = 1
-    ENERGY_GATE_THRESHOLD = 0.009
-    CHUNK_DURATION = 3.0
-    SILENCE_INTERVAL = 3.0
+    ENERGY_GATE_THRESHOLD = 0.001
+    CHUNK_DURATION = 2.0
+    SILENCE_INTERVAL = 4
+    queue_size = 20
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
     log_dir = os.path.join(desktop, "STT_logs")
@@ -161,4 +155,4 @@ if __name__ == "__main__":
         print(f"❌ 마이크 장치 확인 실패: {e}")
         sys.exit(1)
 
-    process_audio(MODEL_SIZE, SAMPLE_RATE, ENERGY_GATE_THRESHOLD, log_path, DEVICE_ID, CHANNELS, CHUNK_DURATION, SILENCE_INTERVAL)
+    process_audio(MODEL_SIZE, SAMPLE_RATE, ENERGY_GATE_THRESHOLD, log_path, DEVICE_ID, CHANNELS, CHUNK_DURATION, SILENCE_INTERVAL, RECORD_SECONDS, queue_size)
