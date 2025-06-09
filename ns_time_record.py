@@ -102,7 +102,7 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                         vad_filter=True,
                         beam_size=1,
                         temperature=0.0,
-                        compression_ratio_threshold=2.4)
+                        compression_ratio_threshold=1.8)
                     for segment in segments:
                         clean_text = remove_repeated_words(segment.text.strip())
                         if not is_duplicate_text(clean_text, last_output_text):
