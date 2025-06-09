@@ -21,7 +21,7 @@ class Logger:
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
-        self.log.flush()  # 💡 여기 추가!
+        self.log.flush()  
 
     def flush(self):
         self.terminal.flush()
@@ -78,20 +78,37 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
             # sys.__stdout__.write(f"[DEBUG] chunk_energy={energy:.6f}\n")
             # sys.__stdout__.flush()
 
-            if energy < energy_threshold:
-                buffer.append(torch.zeros_like(audio_tensor))
-                buffer_duration += chunk_duration
-                if time.time() - last_spoken_time >= silence_interval:
-                    sys.__stdout__.write("-\n")
-                    sys.stdout.flush()
-                    last_spoken_time = time.time()
-            else:
+            if energy >= energy_threshold:
                 if sample_rate != 16000:
                     audio_tensor = torchaudio.functional.resample(
                         audio_tensor, orig_freq=sample_rate, new_freq=16000
                     ).contiguous()
                 buffer.append(audio_tensor)
                 buffer_duration += chunk_duration
+                last_spoken_time = time.time()
+            else:
+                if time.time() - last_spoken_time >= silence_interval and buffer:
+                    sys.__stdout__.write("-\n")
+                    sys.__stdout__.flush()
+                    last_spoken_time = time.time()
+                    combined_audio = torch.cat(buffer)
+                    audio_array = combined_audio.cpu().numpy()
+                    segments, _ = model.transcribe(
+                        audio_array, 
+                        language="ko", 
+                        vad_filter=True, 
+                        beam_size=1, 
+                        temperature=0.0)
+                    for segment in segments:
+                        clean_text = remove_repeated_words(segment.text.strip())
+                        if not is_duplicate_text(clean_text, last_output_text):
+                            print(clean_text)
+                            sys.stdout.flush()
+                            last_output_text = clean_text
+                    buffer.clear()
+                    buffer_duration = 0.0
+                else:
+                    continue
 
             if buffer_duration >= 10.0:
                 combined_audio = torch.cat(buffer)
