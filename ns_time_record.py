@@ -9,6 +9,7 @@ import torchaudio
 import numpy as np
 import sounddevice as sd
 from datetime import datetime
+from collections import Counter
 from faster_whisper import WhisperModel
 
 # ============================= Logger
@@ -27,7 +28,7 @@ class Logger:
         self.log.flush()
 
 # ============================= 중복 제거 함수
-# ✅ 반복 텍스트 필터 함수
+# 반복 텍스트 필터 함수
 def is_repetitive(text: str) -> bool:
     # 1. 문자 반복 검사:
     # 공백을 제거한 후 같은 문자가 5번 이상 반복되면 반복으로 간주
