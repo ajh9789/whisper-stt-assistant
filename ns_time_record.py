@@ -137,10 +137,10 @@ if __name__ == "__main__":
     DEVICE_ID = 1
     CHANNELS = 1
     ENERGY_GATE_THRESHOLD = 0.001
-    RECORD_SECONDS = 14.0
-    CHUNK_DURATION = 2.0
+    RECORD_SECONDS = 15.0
+    CHUNK_DURATION = 3.0
     SILENCE_INTERVAL = 3
-    queue_size = 30
+    queue_size = 20
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
     log_dir = os.path.join(desktop, "STT_logs")
