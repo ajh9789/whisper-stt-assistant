@@ -88,8 +88,6 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                 last_spoken_time = time.time()
             else:
                 if time.time() - last_spoken_time >= silence_interval and buffer:
-                    sys.__stdout__.write("-\n")
-                    sys.__stdout__.flush()
                     last_spoken_time = time.time()
                     combined_audio = torch.cat(buffer)
                     audio_array = combined_audio.cpu().numpy()
@@ -107,6 +105,8 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                             last_output_text = clean_text
                     buffer.clear()
                     buffer_duration = 0.0
+                    sys.__stdout__.write("-\n")
+                    sys.__stdout__.flush()
                 else:
                     continue
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     CHANNELS = 1
     ENERGY_GATE_THRESHOLD = 0.009
     CHUNK_DURATION = 3.0
-    SILENCE_INTERVAL = 6.0
+    SILENCE_INTERVAL = 3.0
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
     log_dir = os.path.join(desktop, "STT_logs")
