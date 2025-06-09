@@ -135,12 +135,12 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
 if __name__ == "__main__":
     MODEL_SIZE = "large-v3"
     DEVICE_ID = 1
-    RECORD_SECONDS = 14.0
     CHANNELS = 1
     ENERGY_GATE_THRESHOLD = 0.001
+    RECORD_SECONDS = 16.0
     CHUNK_DURATION = 2.0
     SILENCE_INTERVAL = 4
-    queue_size = 20
+    queue_size = 30
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
     log_dir = os.path.join(desktop, "STT_logs")
