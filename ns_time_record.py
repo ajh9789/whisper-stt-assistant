@@ -142,10 +142,10 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
 if __name__ == "__main__":
     MODEL_SIZE = "large-v3"
     DEVICE_ID = 1
-    RECORD_SECONDS = 10
+    RECORD_SECONDS = 15
     CHANNELS = 1
     ENERGY_GATE_THRESHOLD = 0.009
-    CHUNK_DURATION = 2.0
+    CHUNK_DURATION = 3.0
     SILENCE_INTERVAL = 6.0
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
