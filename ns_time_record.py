@@ -80,7 +80,7 @@ def is_ngram_repetitive(text: str, n=2) -> bool:
     return False
 
 # ============================= STT 처리 메인 함수
-def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id, channels, chunk_duration, silence_interval, RECORD_SECONDS, queue_size):
+def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id, channels, chunk_duration, silence_interval, RECORD_SECONDS, queue_size, INACTIVITY_TIMEOUT):
 
     log_file = open(log_path, "a", encoding="utf-8")
     sys.stdout.reconfigure(encoding='utf-8')
@@ -93,6 +93,7 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
     print(f"STT 시작: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     sys.stdout.flush()
 
+    last_print_time = time.time() 
     audio_queue = queue.Queue(maxsize=queue_size)
     buffer = []
     buffer_duration = 0.0
@@ -163,6 +164,7 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                     if final_output:
                         print(final_output)
                         sys.stdout.flush()
+                        last_print_time = time.time()  # ✅ 마지막 출력 시간 갱신
                         silence_marker_printed = False  # 음성 출력 후 다시 "-" 출력 가능하게 초기화
 
                     final_output = ""
@@ -171,9 +173,17 @@ def process_audio(model_size, sample_rate, energy_threshold, log_path, device_id
                         sys.__stdout__.write("-\n")
                         sys.__stdout__.flush()
                         silence_marker_printed = True
+                        last_print_time = time.time()
 
                 buffer.clear()
                 buffer_duration = 0.0
+
+            # 🔥 항상 감시: 출력 없음 기준 '-' 출력
+            if time.time() - last_print_time >= INACTIVITY_TIMEOUT and not silence_marker_printed:
+                sys.__stdout__.write("-\n")
+                sys.__stdout__.flush()
+                silence_marker_printed = True
+                last_print_time = time.time()
 
     except KeyboardInterrupt:
         print(f"\nSTT 종료: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -191,6 +201,7 @@ if __name__ == "__main__":
     CHUNK_DURATION = 3.0
     SILENCE_INTERVAL = 3
     queue_size = 20
+    INACTIVITY_TIMEOUT = 6  # 출력 없을 시 '-' 출력 대기 시간(초)
 
     desktop = os.path.join(os.path.expanduser("~"), "Desktop")
     log_dir = os.path.join(desktop, "STT_logs")
@@ -205,4 +216,4 @@ if __name__ == "__main__":
         print(f"❌ 마이크 장치 확인 실패: {e}")
         sys.exit(1)
 
-    process_audio(MODEL_SIZE, SAMPLE_RATE, ENERGY_GATE_THRESHOLD, log_path, DEVICE_ID, CHANNELS, CHUNK_DURATION, SILENCE_INTERVAL, RECORD_SECONDS, queue_size)
+    process_audio(MODEL_SIZE, SAMPLE_RATE, ENERGY_GATE_THRESHOLD, log_path, DEVICE_ID, CHANNELS, CHUNK_DURATION, SILENCE_INTERVAL, RECORD_SECONDS, queue_size, INACTIVITY_TIMEOUT)
